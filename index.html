@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bite — Calorie Tracker</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #161616;
+    --border: #2a2a2a;
+    --accent: #4ade80;
+    --accent2: #22c55e;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #f5f5f5;
+    --muted: #888;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    padding: 20px 16px 100px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .header-date {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .settings-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Goal Cards */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .goal-card {
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .goal-card.fat {
+    background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 100%);
+    border: 1px solid #2d4a2d;
+  }
+
+  .goal-card.muscle {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1f 100%);
+    border: 1px solid #2d2d4a;
+  }
+
+  .goal-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .goal-card.fat .goal-label { color: var(--accent); }
+  .goal-card.muscle .goal-label { color: #818cf8; }
+
+  .goal-lbs {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .goal-lbs span {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .goal-bar-bg {
+    background: #1a1a1a;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+  }
+
+  .goal-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.6s ease;
+  }
+
+  .goal-card.fat .goal-bar-fill { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .goal-card.muscle .goal-bar-fill { background: linear-gradient(90deg, #818cf8, #6366f1); }
+
+  .goal-bar-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Daily Summary */
+  .daily-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  .stat-card.over .stat-value { color: var(--red); }
+  .stat-card.under .stat-value { color: var(--accent); }
+
+  /* Food Log */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .food-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .food-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .food-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .food-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .food-name {
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .food-detail {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .food-cal {
+    font-size: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .food-cal span {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .food-delete {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  .food-delete:hover { color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  /* Camera Button */
+  .camera-fab {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    color: #000;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(74, 222, 128, 0.3);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+
+  .camera-fab:active { transform: translateX(-50%) scale(0.93); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    width: 100%;
+    max-width: 430px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    padding: 24px 20px 40px;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: #444;
+    border-radius: 4px;
+    margin: 0 auto 20px;
+  }
+
+  .modal h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* Camera */
+  .camera-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .camera-container video,
+  .camera-container canvas,
+  .camera-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .shutter-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--accent);
+    color: #000;
+    margin-bottom: 10px;
+  }
+
+  .shutter-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .retake-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+  }
+
+  .analyzing {
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+  }
+
+  .analyzing .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Settings Modal */
+  .setting-group {
+    margin-bottom: 20px;
+  }
+
+  .setting-group label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .setting-group input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+  }
+
+  .save-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: var(--accent);
+    color: #000;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Date Picker */
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .date-nav button {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .date-nav .date-display {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .date-nav .today-tag {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  /* Weight Log */
+  .weight-section {
+    margin-bottom: 24px;
+  }
+
+  .weight-input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .weight-input-row input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 16px;
+  }
+
+  .weight-input-row button {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .weight-history {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .weight-tag {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .weight-tag .wt-date { color: var(--muted); margin-right: 6px; }
+
+  /* Chart */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .chart-card h3 {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 100px;
+  }
+
+  .chart-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .chart-bar {
+    width: 100%;
+    max-width: 28px;
+    border-radius: 6px 6px 2px 2px;
+    background: var(--accent);
+    min-height: 2px;
+    transition: height 0.4s ease;
+  }
+
+  .chart-bar.over { background: var(--red); }
+
+  .chart-bar-label {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .chart-limit-line {
+    position: relative;
+    width: 100%;
+    margin-top: -1px;
+  }
+
+  .upload-option {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .upload-option button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .upload-option button.active {
+    border-color: var(--accent);
+    background: #1a2e1a;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>Bite</h1>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+    <button class="settings-btn" onclick="openSettings()">&#9881;</button>
+  </div>
+
+  <!-- Date Nav -->
+  <div class="date-nav">
+    <button onclick="changeDate(-1)">&#8592;</button>
+    <div class="date-display" id="dateDisplay"></div>
+    <button onclick="changeDate(1)">&#8594;</button>
+  </div>
+
+  <!-- Goal Cards -->
+  <div class="goals-grid">
+    <div class="goal-card fat">
+      <div class="goal-label">Lose Fat</div>
+      <div class="goal-lbs" id="fatProgress">0 <span>/ 7 lbs</span></div>
+      <div class="goal-bar-bg">
+        <div class="goal-bar-fill" id="fatBar" style="width:0%"></div>
+      </div>
+      <div class="goal-bar-label">
+        <span id="startWeight">—</span>
+        <span id="targetWeight">—</span>
+      </div>
+    </div>
+    <div class="goal-card muscle">
+      <div class="goal-label">Build Muscle</div>
+      <div class="goal-lbs" id="muscleProgress">0 <span>/ 4 lbs</span></div>
+      <div class="goal-bar-bg">
+        <div class="goal-bar-fill" id="muscleBar" style="width:0%"></div>
+      </div>
+      <div class="goal-bar-label">
+        <span>Start</span>
+        <span>+4 lbs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Budget Bar -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:12px;color:var(--muted)">Daily budget</div>
+      <div style="font-size:22px;font-weight:700" id="dailyBudget">—</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--muted)">Protein target</div>
+      <div style="font-size:22px;font-weight:700;color:#818cf8" id="proteinTarget">—</div>
+    </div>
+  </div>
+
+  <!-- Daily Summary -->
+  <div class="daily-summary" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="stat-card" id="eatenCard">
+      <div class="stat-value" id="eatenVal">0</div>
+      <div class="stat-label">Cal</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="remainVal">—</div>
+      <div class="stat-label">Left</div>
+    </div>
+    <div class="stat-card" id="proteinCard">
+      <div class="stat-value" style="color:#818cf8" id="proteinVal">0g</div>
+      <div class="stat-label">Protein</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="mealsVal">0</div>
+      <div class="stat-label">Meals</div>
+    </div>
+  </div>
+
+  <!-- 7-Day Chart -->
+  <div class="chart-card">
+    <h3>Last 7 Days</h3>
+    <div class="chart-bars" id="chartBars"></div>
+  </div>
+
+  <!-- Weight Log -->
+  <div class="weight-section">
+    <div class="section-header">
+      <div class="section-title">Log Weight</div>
+    </div>
+    <div class="weight-input-row">
+      <input type="number" id="weightInput" placeholder="Weight (lbs)" step="0.1" style="flex:1">
+      <input type="number" id="leanMassInput" placeholder="Lean mass (optional)" step="0.1" style="flex:1">
+      <button onclick="logWeight()">Save</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">Lean mass = weight - fat. Track via DEXA, smart scale, or estimate.</div>
+    <div class="weight-history" id="weightHistory"></div>
+  </div>
+
+  <!-- Food Log -->
+  <div class="section-header">
+    <div class="section-title">Today's Food</div>
+    <div style="font-size:13px;color:var(--muted)" id="logDate"></div>
+  </div>
+  <div class="food-list" id="foodList"></div>
+</div>
+
+<!-- Camera FAB -->
+<button class="camera-fab" onclick="openCamera()">&#128247;</button>
+
+<!-- Camera Modal -->
+<div class="modal-overlay" id="cameraModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Snap Your Meal</h2>
+    <div class="upload-option">
+      <button id="btnCapture" class="active" onclick="switchMode('capture')">Camera</button>
+      <button id="btnUpload" onclick="switchMode('upload')">Upload</button>
+    </div>
+    <div class="camera-container" id="cameraContainer">
+      <video id="cameraVideo" autoplay playsinline></video>
+      <canvas id="cameraCanvas" style="display:none"></canvas>
+      <img id="previewImg" style="display:none">
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+    <div id="cameraActions">
+      <button class="shutter-btn" id="shutterBtn" onclick="takePhoto()">Take Photo</button>
+    </div>
+    <div class="analyzing" id="analyzingState" style="display:none">
+      <div class="spinner"></div>
+      <div>Analyzing your food...</div>
+    </div>
+    <button class="retake-btn" style="margin-top:10px" onclick="closeCamera()">Cancel</button>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Settings</h2>
+    <div class="setting-group">
+      <label>Claude API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    </div>
+    <div class="setting-group">
+      <label>Current Weight (lbs)</label>
+      <input type="number" id="currentWeightInput" placeholder="e.g. 160">
+    </div>
+    <div class="setting-group">
+      <label>Daily Calorie Budget</label>
+      <input type="number" id="calBudgetInput" placeholder="e.g. 1500">
+    </div>
+    <div class="setting-group">
+      <label>Daily Protein Target (g)</label>
+      <input type="number" id="proteinInput" placeholder="e.g. 120">
+    </div>
+    <div class="setting-group">
+      <label>Goal: Lose 7 lbs fat + Gain 4 lbs muscle in (weeks)</label>
+      <input type="number" id="weeksInput" placeholder="e.g. 12" value="12">
+    </div>
+    <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+    <button class="retake-btn" style="margin-top:10px" onclick="closeSettings()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'bite_data';
+const dateFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+let currentDate = todayStr();
+let cameraStream = null;
+let capturedImage = null;
+let captureMode = 'capture';
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getData() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getSettings() {
+  const data = getData();
+  return data.settings || {};
+}
+
+function getDayLog(date) {
+  const data = getData();
+  return (data.days && data.days[date]) || [];
+}
+
+function saveDayLog(date, log) {
+  const data = getData();
+  if (!data.days) data.days = {};
+  data.days[date] = log;
+  saveData(data);
+}
+
+function getDayTotal(date) {
+  return getDayLog(date).reduce((sum, item) => sum + (item.calories || 0), 0);
+}
+
+// Date navigation
+function changeDate(delta) {
+  const d = new Date(currentDate + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  const newDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  if (newDate > todayStr()) return;
+  currentDate = newDate;
+  render();
+}
+
+function render() {
+  const settings = getSettings();
+  const budget = settings.calBudget || 1500;
+  const startW = settings.startWeight || 0;
+  const targetW = startW ? startW - 7 : 0;
+
+  // Header date
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // Date display
+  const d = new Date(currentDate + 'T12:00:00');
+  const isToday = currentDate === todayStr();
+  document.getElementById('dateDisplay').innerHTML = dateFormatter.format(d) + (isToday ? ' <span class="today-tag">Today</span>' : '');
+  document.getElementById('logDate').textContent = dateFormatter.format(d);
+
+  // Budget
+  document.getElementById('dailyBudget').textContent = budget + ' cal';
+
+  // Protein target
+  const proteinGoal = settings.proteinTarget || 120;
+  document.getElementById('proteinTarget').textContent = proteinGoal + 'g';
+
+  // Weight/fat progress
+  const data = getData();
+  const weights = data.weights || [];
+  const latestWeight = weights.length ? weights[weights.length - 1].value : startW;
+  const lost = startW ? Math.max(0, startW - latestWeight) : 0;
+  const fatPct = Math.min(100, (lost / 7) * 100);
+  document.getElementById('fatProgress').innerHTML = `${lost.toFixed(1)} <span>/ 7 lbs</span>`;
+  document.getElementById('fatBar').style.width = fatPct + '%';
+  document.getElementById('startWeight').textContent = startW ? startW + ' lbs' : '—';
+  document.getElementById('targetWeight').textContent = targetW ? targetW + ' lbs' : '—';
+
+  // Muscle progress
+  const startLean = settings.startLeanMass || 0;
+  const latestLean = weights.length && weights[weights.length - 1].leanMass ? weights[weights.length - 1].leanMass : startLean;
+  const muscleGain = startLean ? Math.max(0, latestLean - startLean) : 0;
+  const musclePct = Math.min(100, (muscleGain / 4) * 100);
+  document.getElementById('muscleProgress').innerHTML = `${muscleGain.toFixed(1)} <span>/ 4 lbs</span>`;
+  document.getElementById('muscleBar').style.width = musclePct + '%';
+
+  // Daily stats
+  const dayLog = getDayLog(currentDate);
+  const eaten = dayLog.reduce((s, i) => s + (i.calories || 0), 0);
+  const remaining = budget - eaten;
+  document.getElementById('eatenVal').textContent = eaten;
+  document.getElementById('remainVal').textContent = remaining;
+  document.getElementById('mealsVal').textContent = dayLog.length;
+
+  // Protein
+  const proteinEaten = dayLog.reduce((s, i) => s + (i.protein || 0), 0);
+  document.getElementById('proteinVal').textContent = proteinEaten + 'g';
+
+  const eatenCard = document.getElementById('eatenCard');
+  eatenCard.classList.toggle('over', eaten > budget);
+  eatenCard.classList.toggle('under', eaten <= budget);
+
+  // Food list
+  const foodList = document.getElementById('foodList');
+  if (dayLog.length === 0) {
+    foodList.innerHTML = `<div class="empty-state"><div class="emoji">&#127869;</div><div>No meals logged yet.<br>Tap the camera to add food!</div></div>`;
+  } else {
+    foodList.innerHTML = dayLog.map((item, i) => `
+      <div class="food-item">
+        ${item.image ? `<img class="food-thumb" src="${item.image}" alt="">` : ''}
+        <div class="food-info">
+          <div class="food-name">${esc(item.name)}</div>
+          <div class="food-detail">${item.time || ''} ${item.details ? '· ' + esc(item.details) : ''}</div>
+        </div>
+        <div class="food-cal">${item.calories}<span> cal</span><div style="font-size:12px;color:#818cf8;font-weight:500">${item.protein || 0}g pro</div></div>
+        <button class="food-delete" onclick="deleteFood(${i})">&#10005;</button>
+      </div>
+    `).join('');
+  }
+
+  // 7-day chart
+  renderChart(budget);
+
+  // Weight history
+  renderWeightHistory();
+}
+
+function renderChart(budget) {
+  const bars = document.getElementById('chartBars');
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    days.push({ date: ds, label: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()], total: getDayTotal(ds) });
+  }
+  const max = Math.max(budget, ...days.map(d => d.total)) || 1;
+  bars.innerHTML = days.map(d => {
+    const h = Math.max(2, (d.total / max) * 90);
+    const over = d.total > budget;
+    return `<div class="chart-bar-col"><div class="chart-bar${over ? ' over' : ''}" style="height:${h}px"></div><div class="chart-bar-label">${d.label}</div></div>`;
+  }).join('');
+}
+
+function renderWeightHistory() {
+  const data = getData();
+  const weights = (data.weights || []).slice(-7).reverse();
+  const container = document.getElementById('weightHistory');
+  container.innerHTML = weights.map(w =>
+    `<div class="weight-tag"><span class="wt-date">${w.date.slice(5)}</span>${w.value} lbs</div>`
+  ).join('');
+}
+
+function logWeight() {
+  const input = document.getElementById('weightInput');
+  const leanInput = document.getElementById('leanMassInput');
+  const val = parseFloat(input.value);
+  if (!val) return;
+  const leanVal = parseFloat(leanInput.value) || null;
+  const data = getData();
+  if (!data.weights) data.weights = [];
+  const entry = { date: todayStr(), value: val };
+  if (leanVal) entry.leanMass = leanVal;
+  const existing = data.weights.findIndex(w => w.date === todayStr());
+  if (existing >= 0) data.weights[existing] = entry;
+  else data.weights.push(entry);
+
+  if (!data.settings) data.settings = {};
+  if (!data.settings.startLeanMass && leanVal) data.settings.startLeanMass = leanVal;
+
+  saveData(data);
+  input.value = '';
+  leanInput.value = '';
+  render();
+}
+
+function deleteFood(index) {
+  const log = getDayLog(currentDate);
+  log.splice(index, 1);
+  saveDayLog(currentDate, log);
+  render();
+}
+
+function esc(s) {
+  const el = document.createElement('span');
+  el.textContent = s;
+  return el.innerHTML;
+}
+
+// Camera
+function switchMode(mode) {
+  captureMode = mode;
+  document.getElementById('btnCapture').classList.toggle('active', mode === 'capture');
+  document.getElementById('btnUpload').classList.toggle('active', mode === 'upload');
+  if (mode === 'upload') {
+    stopCamera();
+    document.getElementById('shutterBtn').textContent = 'Choose Photo';
+    document.getElementById('shutterBtn').onclick = () => document.getElementById('fileInput').click();
+  } else {
+    document.getElementById('shutterBtn').textContent = 'Take Photo';
+    document.getElementById('shutterBtn').onclick = takePhoto;
+    startCamera();
+  }
+}
+
+async function openCamera() {
+  document.getElementById('cameraModal').classList.add('active');
+  capturedImage = null;
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('cameraVideo').style.display = 'block';
+  document.getElementById('cameraActions').style.display = 'block';
+  document.getElementById('analyzingState').style.display = 'none';
+  document.getElementById('shutterBtn').disabled = false;
+  switchMode('capture');
+}
+
+async function startCamera() {
+  try {
+    const video = document.getElementById('cameraVideo');
+    video.style.display = 'block';
+    document.getElementById('previewImg').style.display = 'none';
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = cameraStream;
+  } catch (e) {
+    switchMode('upload');
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  document.getElementById('cameraVideo').style.display = 'none';
+}
+
+function takePhoto() {
+  if (capturedImage) {
+    analyzePhoto(capturedImage);
+    return;
+  }
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedImage = canvas.toDataURL('image/jpeg', 0.8);
+  stopCamera();
+  const preview = document.getElementById('previewImg');
+  preview.src = capturedImage;
+  preview.style.display = 'block';
+  document.getElementById('shutterBtn').textContent = 'Analyze This';
+  document.getElementById('shutterBtn').onclick = () => analyzePhoto(capturedImage);
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    capturedImage = ev.target.result;
+    const preview = document.getElementById('previewImg');
+    preview.src = capturedImage;
+    preview.style.display = 'block';
+    document.getElementById('cameraVideo').style.display = 'none';
+    document.getElementById('shutterBtn').textContent = 'Analyze This';
+    document.getElementById('shutterBtn').onclick = () => analyzePhoto(capturedImage);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzePhoto(imageData) {
+  const settings = getSettings();
+  if (!settings.apiKey) {
+    alert('Please set your Claude API key in Settings first.');
+    return;
+  }
+
+  document.getElementById('cameraActions').style.display = 'none';
+  document.getElementById('analyzingState').style.display = 'block';
+
+  const base64 = imageData.split(',')[1];
+  const mediaType = imageData.split(';')[0].split(':')[1];
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': settings.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: `Identify the food in this image and estimate calories and protein. Be specific about portions. Reply ONLY in this JSON format, no other text:
+{"name": "Food name", "calories": 350, "protein": 25, "details": "portion size and breakdown"}` }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(err);
+    }
+
+    const result = await resp.json();
+    const text = result.content[0].text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Could not parse response');
+
+    const food = JSON.parse(jsonMatch[0]);
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+    const log = getDayLog(currentDate);
+    log.push({
+      name: food.name,
+      calories: food.calories,
+      protein: food.protein || 0,
+      details: food.details,
+      time: timeStr,
+      image: imageData
+    });
+    saveDayLog(currentDate, log);
+    closeCamera();
+    render();
+  } catch (err) {
+    alert('Error analyzing food: ' + err.message);
+    document.getElementById('cameraActions').style.display = 'block';
+    document.getElementById('analyzingState').style.display = 'none';
+  }
+}
+
+function closeCamera() {
+  stopCamera();
+  document.getElementById('cameraModal').classList.remove('active');
+  capturedImage = null;
+  document.getElementById('fileInput').value = '';
+}
+
+// Settings
+function openSettings() {
+  const settings = getSettings();
+  document.getElementById('apiKeyInput').value = settings.apiKey || '';
+  document.getElementById('currentWeightInput').value = settings.startWeight || '';
+  document.getElementById('calBudgetInput').value = settings.calBudget || '';
+  document.getElementById('proteinInput').value = settings.proteinTarget || '';
+  document.getElementById('weeksInput').value = settings.weeks || 12;
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function saveSettings() {
+  const data = getData();
+  const prevSettings = data.settings || {};
+  data.settings = {
+    apiKey: document.getElementById('apiKeyInput').value.trim(),
+    startWeight: parseFloat(document.getElementById('currentWeightInput').value) || 0,
+    calBudget: parseInt(document.getElementById('calBudgetInput').value) || 1500,
+    proteinTarget: parseInt(document.getElementById('proteinInput').value) || 120,
+    weeks: parseInt(document.getElementById('weeksInput').value) || 12,
+    startLeanMass: prevSettings.startLeanMass || 0
+  };
+  saveData(data);
+  closeSettings();
+  render();
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+}
+
+// Close modals on overlay click
+document.getElementById('cameraModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCamera(); });
+document.getElementById('settingsModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettings(); });
+
+// Init
+render();
+</script>
+</body>
+</html>
